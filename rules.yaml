@@ -1,0 +1,66 @@
+apiVersion: v1alpha1
+
+loglevel: debug
+
+database:
+  path: "entries.db"
+
+http:
+  userAgent: "RSSBot/1.0"
+  pollingIntervalMs: 60000
+  rss_url: "https://old.reddit.com/r/canada/new/.rss"
+
+match_outputs:
+  - stdout: {}
+  - gotify:
+      url: "http://127.0.0.1:80/message"
+      token: token_here
+#  - http:
+#      method: POST
+#      url: "http://localhost:8080/someEndpoint"
+#      payload_tmpl: |
+#        {
+#          "title": "{{.Entry.Title}}",
+#          "author": "{{.Entry.Author.Name}}",
+#          "url": "{{.Entry.Link.Href}}",
+#          "matched": "{{join .Matched ", "}}"
+#        }
+
+# The following rules examples generated on 06-06-2025 based on r/news/top/.rss
+rules:
+  # 1. stringContains: look for "Constitution" in titles
+  - ruleType: stringContains
+    targetFields: ["title"]
+    pattern: "Constitution"
+    ref: "contains_constitution"
+
+  # 2. regex: match authors with "Fancy" in their name
+  - ruleType: regex
+    targetField: "author"
+    pattern: "(?i)Fancy"
+    ref: "fancy_author"
+
+  # 3. chained regex on fancy author: ensure it's exactly 'FancyNewMe'
+  - ruleType: regex
+    targetRef: fancy_author
+    pattern: "^/u/FancyNewMe$"
+    ref: "exact_fancy_author"
+
+  # 4. regex_named_capture: extract bill number like "S-218"
+  - ruleType: regex_named_capture
+    targetField: "title"
+    pattern: "(?P<bill>S-\\d+)"
+    ref: "bill_capture"
+
+  # 5. regex on captured bill number: check if it's bill S-218 specifically
+  - ruleType: regex
+    targetCaptureGroup: bill
+    pattern: "^S-218$"
+    ref: "is_bill_218"
+
+  # 6. string_distance: approximate match for headline about "Crown corporations"
+  - ruleType: string_distance
+    targetFields: ["title"]
+    pattern: "Canada’s runaway Crown corporations"
+    distanceThreshold: 6
+    ref: "fuzzy_crown"

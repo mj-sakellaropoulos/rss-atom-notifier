@@ -1,0 +1,39 @@
+version: 2
+
+project_name: rss-atom-notifier
+
+builds:
+  - id: default
+    main: .
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - linux
+    goarch:
+      - 'amd64'
+      - '386'
+      - 'arm64'
+      - 'arm'
+    goarm:
+      - '6'
+    ignore:
+      - goos: windows
+        goarch: arm
+        goarm: 6
+
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    formats: ['tar.gz','zip']
+    format_overrides:
+      - goos: linux
+        formats: tar.gz
+      - goos: windows
+        formats: zip
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  draft: false
+  prerelease: false
